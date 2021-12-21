@@ -1,6 +1,10 @@
 import React from "react";
 import "./styles.css";
 
+const Button = (props) => (
+  <button onClick={() => props.sort(props.counters)}>Sort</button>
+);
+
 class Counter extends React.Component {
   render() {
     return (
@@ -42,14 +46,21 @@ class App extends React.Component {
   handleClick = (counter) => {
     const counters = this.state.counters.map((element) => {
       if (element.id === counter.id) {
-        element.defaultValue = element.incrementValue
-          ? element.defaultValue + element.incrementValue
-          : element.defaultValue + 1;
-        return element;
+        return {
+          ...element,
+          defaultValue: element.defaultValue + (element.incrementValue || 1)
+        };
       }
       return element;
     });
     this.setState({ counters });
+  };
+
+  handleSort = (counters) => {
+    const sorted = counters.sort(
+      (first, second) => first.defaultValue - second.defaultValue
+    );
+    this.setState({ sorted });
   };
 
   render() {
@@ -65,6 +76,7 @@ class App extends React.Component {
             defaultValue={counter.defaultValue}
           />
         ))}
+        <Button sort={this.handleSort} counters={this.state.counters} />
       </div>
     );
   }
