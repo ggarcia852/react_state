@@ -1,12 +1,17 @@
 import React from "react";
 import "./styles.css";
 
+const Sort = (props) => (
+  <button onClick={() => props.handleSort(props.list)}>Sort</button>
+);
+
 const Item = (props) => (
   <li
     data-testid="todo-item"
     className={props.item.completed ? "item-completed" : ""}
   >
     {props.item.value}
+    <br />
     <button
       data-testid="toggle-button"
       onClick={() => props.handleToggle(props.item)}
@@ -19,20 +24,28 @@ const Item = (props) => (
     >
       Remove
     </button>
+    <br />
+    Priority:{props.item.priority}
+    <button onClick={() => props.handleDecrement(props.item)}>-</button>
+    <button onClick={() => props.handleIncrement(props.item)}>+</button>
+    <br />
+    <br />
   </li>
 );
 
 const List = (props) => (
-  <ul data-testid="todo-list">
+  <ol data-testid="todo-list">
     {props.list.map((item) => (
       <Item
         key={item.id}
         item={item}
         handleToggle={props.handleToggle}
         handleRemove={props.handleRemove}
+        handleIncrement={props.handleIncrement}
+        handleDecrement={props.handleDecrement}
       />
     ))}
-  </ul>
+  </ol>
 );
 
 class Form extends React.Component {
@@ -64,7 +77,11 @@ class Form extends React.Component {
             value={this.state.inputValue}
           />
         </form>
-        <input onChange={this.handleSearch} />
+        <input
+          value={this.props.value}
+          onChange={this.handleSearch}
+          placeholder="Search"
+        />
       </>
     );
   }
@@ -80,6 +97,7 @@ class App extends React.Component {
     const item = {
       value,
       completed: false,
+      priority: 0,
       id: `${Math.random()}-${Math.random()}`
     };
 
@@ -106,6 +124,39 @@ class App extends React.Component {
     this.setState({ value });
   };
 
+  handleIncrement = (item) => {
+    const newList = this.state.list.map((element) => {
+      if (element.id === item.id) {
+        return {
+          ...element,
+          priority: element.priority < 5 ? element.priority + 1 : 5
+        };
+      }
+      return element;
+    });
+    this.setState({ list: newList });
+  };
+
+  handleDecrement = (item) => {
+    const newList = this.state.list.map((element) => {
+      if (element.id === item.id) {
+        return {
+          ...element,
+          priority: element.priority > 0 ? element.priority - 1 : 0
+        };
+      }
+      return element;
+    });
+    this.setState({ list: newList });
+  };
+
+  handleSort = (list) => {
+    const newList = list.sort(
+      (first, second) => first.priority - second.priority
+    );
+    this.setState({ list: newList });
+  };
+
   render() {
     const newList = this.state.list.filter((item) =>
       item.value.includes(this.state.value)
@@ -113,15 +164,20 @@ class App extends React.Component {
 
     return (
       <div className="App">
+        <h1>To-do App</h1>
         <Form
           handleSubmit={this.handleSubmit}
           handleSearch={this.handleSearch}
+          value={this.state.value}
         />
         <List
           list={newList}
           handleToggle={this.handleToggle}
           handleRemove={this.handleRemove}
+          handleIncrement={this.handleIncrement}
+          handleDecrement={this.handleDecrement}
         />
+        <Sort handleSort={this.handleSort} list={newList} />
       </div>
     );
   }
