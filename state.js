@@ -33,16 +33,17 @@ const Item = (props) => (
   </li>
 );
 
-const List = (props) => (
+const List = ({ list, ...rest }) => (
   <ol data-testid="todo-list">
-    {props.list.map((item) => (
+    {list.map((item) => (
       <Item
         key={item.id}
         item={item}
-        handleToggle={props.handleToggle}
-        handleRemove={props.handleRemove}
-        handleIncrement={props.handleIncrement}
-        handleDecrement={props.handleDecrement}
+        {...rest}
+        // handleToggle={props.handleToggle}
+        // handleRemove={props.handleRemove}
+        // handleIncrement={props.handleIncrement}
+        // handleDecrement={props.handleDecrement}
       />
     ))}
   </ol>
@@ -55,18 +56,19 @@ class Form extends React.Component {
   handleChange = (e) => {
     this.setState({ inputValue: e.target.value });
   };
+
   handleSubmit = (e) => {
     e.preventDefault();
-
     const value = this.state.inputValue;
-
     this.setState({ inputValue: "" });
     this.props.handleSubmit(value);
   };
+
   handleSearch = (e) => {
     const value = e.target.value;
     this.props.handleSearch(value);
   };
+
   render() {
     return (
       <>
@@ -93,6 +95,10 @@ class App extends React.Component {
     value: ""
   };
 
+  setInStorage = (list) => {
+    window.localStorage.setItem("list", JSON.stringify(list));
+  };
+
   handleSubmit = (value) => {
     const item = {
       value,
@@ -103,6 +109,7 @@ class App extends React.Component {
 
     const newList = [...this.state.list, item];
     this.setState({ list: newList });
+    this.setInStorage(newList);
   };
 
   handleToggle = (item) => {
@@ -113,11 +120,13 @@ class App extends React.Component {
       return element;
     });
     this.setState({ list: newList });
+    this.setInStorage(newList);
   };
 
   handleRemove = (item) => {
     const newList = this.state.list.filter((element) => element.id !== item.id);
     this.setState({ list: newList });
+    this.setInStorage(newList);
   };
 
   handleSearch = (value) => {
@@ -135,6 +144,7 @@ class App extends React.Component {
       return element;
     });
     this.setState({ list: newList });
+    this.setInStorage(newList);
   };
 
   handleDecrement = (item) => {
@@ -148,6 +158,7 @@ class App extends React.Component {
       return element;
     });
     this.setState({ list: newList });
+    this.setInStorage(newList);
   };
 
   handleSort = (list) => {
@@ -155,7 +166,14 @@ class App extends React.Component {
       (first, second) => first.priority - second.priority
     );
     this.setState({ list: newList });
+    this.setInStorage(newList);
   };
+
+  componentDidMount() {
+    this.setState({
+      list: JSON.parse(window.localStorage.getItem("list")) || []
+    });
+  }
 
   render() {
     const newList = this.state.list.filter((item) =>
