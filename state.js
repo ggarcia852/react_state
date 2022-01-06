@@ -10,7 +10,19 @@ const Item = (props) => (
     data-testid="todo-item"
     className={props.item.completed ? "item-completed" : ""}
   >
-    {props.item.value}
+    {props.item.editItem ? (
+      <form onSubmit={() => props.handleSubmit(props.item)}>
+        <input
+          defaultValue={props.item.value}
+          onChange={props.handleChange}
+          onBlur={() => props.handleBlur(props.item)}
+        />
+      </form>
+    ) : (
+      <span onClick={() => props.handleClick(props.item)}>
+        {props.item.value}
+      </span>
+    )}
     <br />
     <button
       data-testid="toggle-button"
@@ -33,21 +45,59 @@ const Item = (props) => (
   </li>
 );
 
-const List = ({ list, ...rest }) => (
-  <ol data-testid="todo-list">
-    {list.map((item) => (
-      <Item
-        key={item.id}
-        item={item}
-        {...rest}
-        // handleToggle={props.handleToggle}
-        // handleRemove={props.handleRemove}
-        // handleIncrement={props.handleIncrement}
-        // handleDecrement={props.handleDecrement}
-      />
-    ))}
-  </ol>
-);
+class List extends React.Component {
+  state = {
+    newValue: ""
+  };
+
+  handleClick = (item) => {
+    this.props.list.map((element) => {
+      if (element.id === item.id) {
+        element.editItem = !element.editItem;
+      }
+      return element;
+    });
+    this.setState({ newValue: item.value });
+  };
+
+  handleChange = (e) => {
+    this.setState({ newValue: e.target.value });
+  };
+
+  handleBlur = (item) => {
+    const newValue = this.state.newValue;
+    this.setState({ newValue: "" });
+    this.props.handleEdit(item, newValue);
+  };
+
+  handleSubmit = (item) => {
+    const newValue = this.state.newValue;
+    this.setState({ newValue: "" });
+    this.props.handleEdit(item, newValue);
+  };
+
+  render() {
+    return (
+      <ol data-testid="todo-list">
+        {this.props.list.map((item) => (
+          <Item
+            key={item.id}
+            item={item}
+            handleToggle={this.props.handleToggle}
+            handleRemove={this.props.handleRemove}
+            handleIncrement={this.props.handleIncrement}
+            handleDecrement={this.props.handleDecrement}
+            handleEdit={this.props.handleEdit}
+            handleClick={this.handleClick}
+            handleChange={this.handleChange}
+            handleSubmit={this.handleSubmit}
+            handleBlur={this.handleBlur}
+          />
+        ))}
+      </ol>
+    );
+  }
+}
 
 class Form extends React.Component {
   state = {
@@ -104,6 +154,7 @@ class App extends React.Component {
       value,
       completed: false,
       priority: 0,
+      editItem: false,
       id: `${Math.random()}-${Math.random()}`
     };
 
@@ -169,6 +220,21 @@ class App extends React.Component {
     this.setInStorage(newList);
   };
 
+  handleEdit = (item, value) => {
+    const newList = this.state.list.map((element) => {
+      if (element.id === item.id) {
+        return {
+          ...element,
+          value,
+          editItem: !element.editItem
+        };
+      }
+      return element;
+    });
+    this.setState({ list: newList });
+    this.setInStorage(newList);
+  };
+
   componentDidMount() {
     this.setState({
       list: JSON.parse(window.localStorage.getItem("list")) || []
@@ -194,6 +260,7 @@ class App extends React.Component {
           handleRemove={this.handleRemove}
           handleIncrement={this.handleIncrement}
           handleDecrement={this.handleDecrement}
+          handleEdit={this.handleEdit}
         />
         <Sort handleSort={this.handleSort} list={newList} />
       </div>
